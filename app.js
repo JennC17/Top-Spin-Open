@@ -500,6 +500,7 @@
 
   let seasonSettingsWired = false;
   function renderAdminSeasonSettings() {
+    const hasSeason = !!viewedSeasonId;
     const season = seasonsCache[viewedSeasonId] || {};
     const nameInput = $("#season-name-input"); const dayInput = $("#season-day-input");
     const timeInput = $("#season-time-input"); const deadlineDaysInput = $("#season-deadline-days-input");
@@ -510,16 +511,27 @@
     if (deadlineDaysInput && document.activeElement !== deadlineDaysInput) deadlineDaysInput.value = season.rsvpDeadlineDays != null ? season.rsvpDeadlineDays : 8;
     if (deadlineTimeInput && document.activeElement !== deadlineTimeInput) deadlineTimeInput.value = season.rsvpDeadlineTime || "";
 
+    // Nothing to edit until a season actually exists — disable the fields
+    // and point her at "Start New Season" instead of letting her type into
+    // settings for a season that isn't there yet.
+    [nameInput, dayInput, timeInput, deadlineDaysInput, deadlineTimeInput].forEach(el => { if (el) el.disabled = !hasSeason; });
+    const noSeasonNote = $("#no-season-note");
+    if (noSeasonNote) noSeasonNote.style.display = hasSeason ? "none" : "";
+    const addWeekBtn = $("#add-week-btn"); const scheduleCard = $(".schedule-table-card");
+    if (addWeekBtn) addWeekBtn.style.display = hasSeason ? "" : "none";
+    if (scheduleCard) scheduleCard.style.display = hasSeason ? "" : "none";
+
     if (!seasonSettingsWired && nameInput) {
       seasonSettingsWired = true;
-      nameInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { name: nameInput.value }));
-      dayInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { defaultDay: dayInput.value }));
-      timeInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { defaultTime: timeInput.value }));
-      deadlineDaysInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { rsvpDeadlineDays: Number(deadlineDaysInput.value) || 0 }));
-      deadlineTimeInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { rsvpDeadlineTime: deadlineTimeInput.value }));
+      nameInput.addEventListener("change", () => { if (viewedSeasonId) DB.updateSeason(viewedSeasonId, { name: nameInput.value }); });
+      dayInput.addEventListener("change", () => { if (viewedSeasonId) DB.updateSeason(viewedSeasonId, { defaultDay: dayInput.value }); });
+      timeInput.addEventListener("change", () => { if (viewedSeasonId) DB.updateSeason(viewedSeasonId, { defaultTime: timeInput.value }); });
+      deadlineDaysInput.addEventListener("change", () => { if (viewedSeasonId) DB.updateSeason(viewedSeasonId, { rsvpDeadlineDays: Number(deadlineDaysInput.value) || 0 }); });
+      deadlineTimeInput.addEventListener("change", () => { if (viewedSeasonId) DB.updateSeason(viewedSeasonId, { rsvpDeadlineTime: deadlineTimeInput.value }); });
 
       const deleteBtn = $("#delete-season-btn");
       if (deleteBtn) deleteBtn.addEventListener("click", async () => {
+        if (!viewedSeasonId) return;
         const name = (seasonsCache[viewedSeasonId] || {}).name || "this season";
         if (!confirm(`Permanently delete "${name}" and all of its weeks, RSVPs, and scores? This cannot be undone.`)) return;
         const toDelete = viewedSeasonId;
@@ -531,12 +543,13 @@
 
     // Only an archived (non-current) season can be deleted — the live season
     // everyone's using is never deletable from here, only replaced by starting
-    // a new one.
+    // a new one. And there's nothing to delete before a season exists at all.
     const deleteBtn2 = $("#delete-season-btn"); const deleteNote = $("#delete-season-note");
-    if (deleteBtn2) deleteBtn2.style.display = isArchivedView() ? "" : "none";
-    if (deleteNote) deleteNote.style.display = isArchivedView() ? "" : "none";
+    if (deleteBtn2) deleteBtn2.style.display = (hasSeason && isArchivedView()) ? "" : "none";
+    if (deleteNote) deleteNote.style.display = (hasSeason && isArchivedView()) ? "" : "none";
 
     const body = $("#schedule-table-body"); if (!body) return;
+    if (!hasSeason) { body.innerHTML = ""; return; }
     body.innerHTML = "";
     weeks.slice().sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(w => {
       const tr = document.createElement("tr");
@@ -599,6 +612,7 @@
     });
 
     $("#add-week-btn").addEventListener("click", async () => {
+      if (!viewedSeasonId) { alert("Create a season first with Start New Season."); return; }
       const season = seasonsCache[viewedSeasonId] || {};
       const n = weeks.filter(w => w.type === "regular").length + 1;
       await DB.addWeek(viewedSeasonId, { label: "Week " + n, date: todayISO(), time: season.defaultTime || "6:00 PM", type: "regular", status: "scheduled" });
