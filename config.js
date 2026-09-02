@@ -8,13 +8,12 @@ window.TOPSPIN_CONFIG = {
   // Firebase console → Project settings → General → "Your apps" → SDK setup
   // and configuration → Config. Paste the whole object Firebase gives you.
   firebase: {
-    apiKey: "PASTE_YOUR_FIREBASE_API_KEY",
-    authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-    projectId: "PASTE_YOUR_PROJECT_ID",
-    storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-    messagingSenderId: "PASTE_YOUR_SENDER_ID",
-    appId: "PASTE_YOUR_APP_ID",
-  },
+        apiKey: "AIzaSyAbZBI-4iuzz37tuL6XRXIgpomw9OEAWmA",
+    authDomain: "top-spin-open.firebaseapp.com",
+    projectId: "top-spin-open",
+    storageBucket: "top-spin-open.firebasestorage.app",
+    messagingSenderId: "473880887005",
+    appId: "1:473880887005:web:b926870b843ef4bddee534",  },
 
   // ---- EmailJS settings ----
   // EmailJS dashboard → Account → General for publicKey.
