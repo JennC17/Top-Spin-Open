@@ -84,6 +84,21 @@ function createFirebaseDB(firebaseConfig) {
   async function updateSeason(seasonId, patch) {
     await updateDoc(doc(fs, "seasons", seasonId), patch);
   }
+  // Deletes a season and everything under it (its weeks, and each week's
+  // RSVPs). Firestore doesn't cascade-delete subcollections on its own, so
+  // this walks down and removes them first, then the season doc itself.
+  // Batched (well under the 500-write limit for a season this size).
+  async function removeSeason(seasonId) {
+    const weeksSnap = await getDocs(weeksCol(seasonId));
+    const batch = writeBatch(fs);
+    for (const weekDoc of weeksSnap.docs) {
+      const rsvpsSnap = await getDocs(rsvpsCol(seasonId, weekDoc.id));
+      rsvpsSnap.forEach(r => batch.delete(r.ref));
+      batch.delete(weekDoc.ref);
+    }
+    batch.delete(doc(fs, "seasons", seasonId));
+    await batch.commit();
+  }
 
   // ---------- weeks ----------
   function weeksCol(seasonId) { return collection(fs, "seasons", seasonId, "weeks"); }
@@ -164,7 +179,7 @@ function createFirebaseDB(firebaseConfig) {
   return {
     getConfig, watchConfig, setCurrentSeason, setAdminPasscodeHash,
     watchPlayers, getPlayers, addPlayer, updatePlayer, removePlayer,
-    getSeasons, watchSeason, createSeason, updateSeason,
+    getSeasons, watchSeason, createSeason, updateSeason, removeSeason,
     watchWeeks, getWeeks, addWeek, updateWeek, removeWeek,
     watchRsvps, getRsvps, setRsvp,
     generateCourts, setScore, markEmailSent,

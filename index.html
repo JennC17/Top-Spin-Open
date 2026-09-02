@@ -419,9 +419,11 @@
             <input type="text" id="season-deadline-time-input" placeholder="6:00 PM" style="flex:1;min-width:100px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:8px 12px;font-family:'Inter';font-size:13.5px;color:var(--ink)">
           </span>
         </div>
-        <div class="settings-row" style="border-bottom:none;padding-top:16px">
+        <div class="settings-row" style="border-bottom:none;padding-top:16px;gap:10px">
           <button class="admin-action-btn" id="start-new-season-btn">Start New Season…</button>
+          <button class="admin-action-btn" id="delete-season-btn" style="display:none;color:var(--clay);border-color:var(--clay)">Delete This Season…</button>
         </div>
+        <p style="margin:8px 0 0;color:var(--muted);font-size:12.5px" id="delete-season-note">You're viewing an archived season above — "Delete This Season" permanently removes it (and only it), including all its scores. The current/live season can't be deleted from here.</p>
       </div>
 
       <div class="panel-head" style="margin-top:28px">

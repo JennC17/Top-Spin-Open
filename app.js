@@ -516,7 +516,24 @@
       timeInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { defaultTime: timeInput.value }));
       deadlineDaysInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { rsvpDeadlineDays: Number(deadlineDaysInput.value) || 0 }));
       deadlineTimeInput.addEventListener("change", () => DB.updateSeason(viewedSeasonId, { rsvpDeadlineTime: deadlineTimeInput.value }));
+
+      const deleteBtn = $("#delete-season-btn");
+      if (deleteBtn) deleteBtn.addEventListener("click", async () => {
+        const name = (seasonsCache[viewedSeasonId] || {}).name || "this season";
+        if (!confirm(`Permanently delete "${name}" and all of its weeks, RSVPs, and scores? This cannot be undone.`)) return;
+        const toDelete = viewedSeasonId;
+        viewedSeasonId = config.currentSeasonId;
+        switchViewedSeason(viewedSeasonId);
+        await DB.removeSeason(toDelete);
+      });
     }
+
+    // Only an archived (non-current) season can be deleted — the live season
+    // everyone's using is never deletable from here, only replaced by starting
+    // a new one.
+    const deleteBtn2 = $("#delete-season-btn"); const deleteNote = $("#delete-season-note");
+    if (deleteBtn2) deleteBtn2.style.display = isArchivedView() ? "" : "none";
+    if (deleteNote) deleteNote.style.display = isArchivedView() ? "" : "none";
 
     const body = $("#schedule-table-body"); if (!body) return;
     body.innerHTML = "";
