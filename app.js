@@ -89,6 +89,7 @@
   function subscribeWeeks(seasonId) {
     if (weeksUnsub) weeksUnsub();
     weeks = [];
+    if (!seasonId) return; // no season exists yet (brand-new site) — nothing to subscribe to
     weeksUnsub = DB.watchWeeks(seasonId, (w) => {
       weeks = w; subscribeAllRsvps(); renderAll();
       if (seasonId === config.currentSeasonId) checkAutoReminders();
@@ -611,9 +612,19 @@
         rsvpDeadlineDays: season.rsvpDeadlineDays || 8, rsvpDeadlineTime: season.rsvpDeadlineTime || season.defaultTime || "6:00 PM",
       });
       viewedSeasonId = id;
+      await ensureSeasonLoaded(id);
+      subscribeWeeks(id);
+      renderSeasonSwitcher();
       alert("New season created — add its Match Schedule in Season Settings below.");
     });
   }
+
+  // Safety net: if any button's Firestore call fails (bad rules, offline, a
+  // bug), show it instead of failing completely silently.
+  window.addEventListener("unhandledrejection", (event) => {
+    console.error("Unhandled error:", event.reason);
+    alert("Something went wrong: " + (event.reason && event.reason.message ? event.reason.message : event.reason));
+  });
 
   async function sha256(text) {
     const enc = new TextEncoder().encode(text);
