@@ -421,6 +421,13 @@
       if (btn) btn.onclick = () => generateCourtsFor(target);
     }
 
+    const regenSection = $("#admin-regenerate-section");
+    if (regenSection) {
+      regenSection.style.display = generated ? "" : "none";
+      const regenBtn = $("#regenerate-courts-btn");
+      if (regenBtn) regenBtn.onclick = () => undoLineup(target);
+    }
+
     if (scoreSection) renderScoreEntry(scoreSection, generated);
   }
 
@@ -473,6 +480,21 @@
   async function maybeMarkWeekPlayed(weekId) {
     const w = byId(weeks, weekId);
     if (w && allScored(w)) await DB.updateWeek(viewedSeasonId, weekId, { status: "played" });
+  }
+
+  // "Ungenerate" a week's lineup — for when someone's availability changes
+  // after courts were already generated (a late cancellation, a fill-in
+  // stepping up). Clears the courts/singles/sit-out back to nothing and
+  // drops the week back to "scheduled" so the RSVP pills and the Generate
+  // button reappear and a fresh lineup can be built from updated RSVPs.
+  async function undoLineup(week) {
+    const hasScores = (week.courts || []).some(c => c.sets && c.sets.length)
+      || (week.singles && week.singles.sets && week.singles.sets.length);
+    const msg = hasScores
+      ? "This week already has some scores entered. Undoing the lineup will erase those scores along with the court assignments, so you can update RSVPs and generate a fresh lineup. Continue?"
+      : "Undo this week's lineup? This clears the current court assignments (nobody's RSVP is changed) so you can update who's in/out above and generate a new one.";
+    if (!confirm(msg)) return;
+    await DB.updateWeek(viewedSeasonId, week.id, { status: "scheduled", courts: [], singles: null, sitOutPlayerId: null, emailSentSchedule: false });
   }
 
   async function generateCourtsFor(week) {
