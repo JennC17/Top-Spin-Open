@@ -167,7 +167,10 @@
   }
 
   // ---------- 5. Standings & tiebreakers ----------
-  // matchResults: [{ playerId, weekId, result: 'win'|'loss'|'dnp', sets: [[gf,ga],...] }]
+  // matchResults: [{ playerId, weekId, result: 'win'|'loss'|'dnp', sets: [{a,b},...] }]
+  // sets are {a, b} objects (not [a, b] tuples) — Firestore rejects arrays
+  // whose elements are themselves arrays ("nested arrays"), which a sets
+  // array of tuples would be.
   function computeStandings(playerIds, matchResults) {
     const stats = {};
     for (const id of playerIds) {
@@ -179,7 +182,8 @@
       if (m.result === "win") { s.points += 3; s.wins += 1; s.played += 1; }
       else if (m.result === "loss") { s.points += 1; s.losses += 1; s.played += 1; }
       // 'dnp' / no-show contributes 0 and doesn't increment played
-      for (const [gf, ga] of (m.sets || [])) {
+      for (const set of (m.sets || [])) {
+        const gf = set.a, ga = set.b;
         s.gamesFor += gf; s.gamesAgainst += ga;
         if (gf > ga) s.setsFor += 1; else if (ga > gf) s.setsAgainst += 1;
       }

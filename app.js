@@ -317,7 +317,12 @@
         ${scoreLine}
       </div>`;
   }
-  function formatSets(sets) { return sets.map(([a, b]) => a + "–" + b).join(", "); }
+  // Sets are stored as {a, b} objects, never as [a, b] tuples — Firestore
+  // rejects an array whose elements are themselves arrays ("nested arrays
+  // are not supported"), and our sets list is exactly that shape if we use
+  // tuples.
+  function formatSets(sets) { return sets.map(s => s.a + "–" + s.b).join(", "); }
+  const SET_LABELS = ["Set 1", "Set 2", "Match Tiebreak (first to 10)"];
 
   function renderThisWeek() {
     const head = $("#thisweek-head"); const grid = $("#week-grid"); const sitoutCard = $("#thisweek-sitout");
@@ -430,9 +435,12 @@
         <div class="score-inputs">
           ${[0, 1, 2].map(si => `
             <span class="set-pair">
-              <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="a" value="${m.sets && m.sets[si] ? m.sets[si][0] : ""}">
-              <span>–</span>
-              <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="b" value="${m.sets && m.sets[si] ? m.sets[si][1] : ""}">
+              <label class="set-pair-label">${SET_LABELS[si]}</label>
+              <span class="set-pair-boxes">
+                <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="a" value="${m.sets && m.sets[si] ? m.sets[si].a : ""}">
+                <span>–</span>
+                <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="b" value="${m.sets && m.sets[si] ? m.sets[si].b : ""}">
+              </span>
             </span>`).join("")}
           <button class="admin-action-btn" data-save="${mi}">Save Score</button>
           ${m.winner ? `<span class="winner-tag" style="margin-left:8px">Winner: ${m.winner === "A" ? m.teamA.map(playerName).join(" & ") : m.teamB.map(playerName).join(" & ")}</span>` : ""}
@@ -446,11 +454,11 @@
         for (let si = 0; si < 3; si++) {
           const a = card.querySelector(`input[data-set="${si}"][data-side="a"]`).value;
           const b = card.querySelector(`input[data-set="${si}"][data-side="b"]`).value;
-          if (a !== "" && b !== "") sets.push([Number(a), Number(b)]);
+          if (a !== "" && b !== "") sets.push({ a: Number(a), b: Number(b) });
         }
         if (!sets.length) { alert("Enter at least one set score."); return; }
         let aSets = 0, bSets = 0;
-        sets.forEach(([a, b]) => { if (a > b) aSets++; else if (b > a) bSets++; });
+        sets.forEach(s => { if (s.a > s.b) aSets++; else if (s.b > s.a) bSets++; });
         const winner = aSets > bSets ? "A" : "B";
         const mi = Number(btn.dataset.save);
         const m = matches[mi];
