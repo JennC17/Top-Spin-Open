@@ -430,20 +430,22 @@
     if (week.singles) matches.push({ ref: { kind: "singles" }, label: "Singles", teamA: [week.singles.a], teamB: [week.singles.b], sets: week.singles.sets, winner: week.singles.winner });
 
     container.innerHTML = matches.map((m, mi) => `
-      <div class="card score-card" data-mi="${mi}" style="padding:14px 16px;margin-bottom:10px">
-        <div style="font-weight:600;margin-bottom:8px">${m.label}: ${m.teamA.map(playerName).join(" & ")} vs ${m.teamB.map(playerName).join(" & ")}</div>
-        <div class="score-inputs">
+      <div class="card score-card" data-mi="${mi}">
+        <div class="score-card-teams">${m.label}: ${m.teamA.map(playerName).join(" & ")} vs ${m.teamB.map(playerName).join(" & ")}</div>
+        <div class="score-rows">
           ${[0, 1, 2].map(si => `
-            <span class="set-pair">
-              <label class="set-pair-label">${SET_LABELS[si]}</label>
-              <span class="set-pair-boxes">
-                <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="a" value="${m.sets && m.sets[si] ? m.sets[si].a : ""}">
-                <span>–</span>
-                <input type="number" min="0" max="30" placeholder="-" data-set="${si}" data-side="b" value="${m.sets && m.sets[si] ? m.sets[si].b : ""}">
-              </span>
-            </span>`).join("")}
+            <div class="score-row">
+              <label class="score-row-label">${SET_LABELS[si]}</label>
+              <div class="score-row-boxes">
+                <input class="score-box" type="number" inputmode="numeric" min="0" max="30" placeholder="-" data-set="${si}" data-side="a" value="${m.sets && m.sets[si] ? m.sets[si].a : ""}">
+                <span class="score-row-dash">–</span>
+                <input class="score-box" type="number" inputmode="numeric" min="0" max="30" placeholder="-" data-set="${si}" data-side="b" value="${m.sets && m.sets[si] ? m.sets[si].b : ""}">
+              </div>
+            </div>`).join("")}
+        </div>
+        <div class="score-card-actions">
           <button class="admin-action-btn" data-save="${mi}">Save Score</button>
-          ${m.winner ? `<span class="winner-tag" style="margin-left:8px">Winner: ${m.winner === "A" ? m.teamA.map(playerName).join(" & ") : m.teamB.map(playerName).join(" & ")}</span>` : ""}
+          ${m.winner ? `<span class="winner-tag">Winner: ${m.winner === "A" ? m.teamA.map(playerName).join(" & ") : m.teamB.map(playerName).join(" & ")}</span>` : ""}
         </div>
       </div>`).join("");
 
